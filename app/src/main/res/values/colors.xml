@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#84c4c3</color>
+    <color name="colorPrimaryDark">#219694</color>
+    <color name="colorAccent">#e7e798</color>
+    <color name="screenBG">#e4f0f0</color>
+    <color name="mainBG">#565a6e</color>
+    <color name="keypadBG">#b1c4c4</color>
+    <color name="keybadBorder">#6c6c6c</color>
+</resources>

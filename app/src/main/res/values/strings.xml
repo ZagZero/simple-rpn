@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">Simple RPN</string>
+    <!-- key-name_d - default
+         key-name_a - alternate (shift)
+         key-name_s - stack -->
+    <string name="fn1_d">sin</string>
+    <string name="fn1_a">asin</string>
+    <string name="fn1_s">RollU</string>
+    <string name="fn2_d">cos</string>
+    <string name="fn2_a">acos</string>
+    <string name="fn2_s">RollD</string>
+    <string name="fn3_d">tan</string>
+    <string name="fn3_a">atan</string>
+    <string name="fn3_s">Mark</string>
+    <string name="fn4_d">√x</string>
+    <string name="fn4_a">ˣ√y</string>
+    <string name="fn4_s">Copy</string>
+    <string name="fn5_d">x²</string>
+    <string name="fn5_a">yˣ</string>
+    <string name="fn5_s">Swap</string>
+    <string name="btn_enter_d">Enter</string>
+    <string name="btn_sign_d">+/-</string>
+    <string name="btn_sign_a">EEX</string>
+    <string name="btn_div_d">÷</string>
+    <string name="btn_div_s">▲</string>
+    <string name="btn_mult_d">×</string>
+    <string name="btn_mult_s">▼</string>
+    <string name="btn_sub_d">-</string>
+    <string name="btn_sub_s"> </string>
+    <string name="btn_add_d">+</string>
+    <string name="btn_add_s">"Clear"</string>
+
+</resources>
