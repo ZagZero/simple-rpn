@@ -8,7 +8,7 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;
 import java.lang.Math;
-
+import java.util.Locale;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -23,7 +23,6 @@ public class MainActivity extends AppCompatActivity {
     String enteredNumPrep = "";
     int exponentNum = 0;
     double stackNums[] = new double[maxStack+1];
-    String stackStrings[] = new String[maxStack];
     int stackIndex = 0;
     int cursorPos = 0;
     int markPos = 0;
@@ -61,10 +60,8 @@ public class MainActivity extends AppCompatActivity {
         fn3 = (Button) this.findViewById(R.id.btn_fn_3);
         fn4 = (Button) this.findViewById(R.id.btn_fn_4);
         fn5 = (Button) this.findViewById(R.id.btn_fn_5);
-        //enterBtn = (Button) this.findViewById(R.id.btn_enter);
         signBtn = (Button) this.findViewById(R.id.btn_misc_sign);
         stackBtn = (Button) this.findViewById(R.id.btn_misc_stack);
-        //backBtn = (Button) this.findViewById(R.id.btn_misc_back);
         divBtn = (Button) this.findViewById(R.id.btn_op_div);
         multBtn = (Button) this.findViewById(R.id.btn_op_mult);
         subBtn = (Button) this.findViewById(R.id.btn_op_sub);
@@ -80,9 +77,8 @@ public class MainActivity extends AppCompatActivity {
         if (exponentEntry) {
             if (Math.abs(exponentNum) * 10 < 100)
                 exponentNum = exponentNum * 10 + (numPressed * ((exponentNum >= 0)?1:-1));
-        }// else if (decimalEntry);
+        }
         else
-            //enteredNum = enteredNum * 10 + numPressed
             if (numDigits(enteredNumPrep) < 16)
                 enteredNumPrep = enteredNumPrep + numStr;
         numEntry = true;
@@ -208,15 +204,20 @@ public class MainActivity extends AppCompatActivity {
             double opX;
             double opY;
             boolean failure = false;
+            boolean wasNumEntry = false;
 
-            if (numEntry)
+            if (numEntry) {
                 stackEntry(false);
+                wasNumEntry = true;
+            }
 
             if (stackIndex >= 2) {
                 opY = stackNums[stackIndex - 2];
                 opX = stackNums[stackIndex - 1];
             } else {
                 errorToast("too few arguments", Toast.LENGTH_SHORT);
+                if (wasNumEntry)
+                    updateStackBox(true, false);
                 return;
             }
             try {
@@ -268,9 +269,12 @@ public class MainActivity extends AppCompatActivity {
             double opY;
             int numOperands = 1;
             boolean failure = false;
+            boolean wasNumEntry = false;
 
-            if (numEntry)
+            if (numEntry) {
                 stackEntry(false);
+                wasNumEntry = true;
+            }
 
 
             try {
@@ -281,7 +285,8 @@ public class MainActivity extends AppCompatActivity {
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
                         //Degree option
@@ -293,7 +298,8 @@ public class MainActivity extends AppCompatActivity {
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
                         //Degree option
@@ -305,44 +311,53 @@ public class MainActivity extends AppCompatActivity {
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
                         //Degree option
                         stackNums[stackIndex - numOperands] = Math.cos(opX);
                         break;
-                    case 4: //Square root
-                        numOperands = 1;
+                    case 4: //xth root of y
+                        numOperands = 2;
                         if (stackIndex >= numOperands) {
+                            opY = stackNums[stackIndex - 2];
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
-                        if (opX < 0) {
+                        if (opY < 0) {
                             errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
+                            return;
                         } else {
-                            stackNums[stackIndex - numOperands] = Math.sqrt(opX);
+                            stackNums[stackIndex - numOperands] = Math.pow(opY, 1 / opX);
                         }
                         break;
-                    case 5: //Squared
-                        numOperands = 1;
+                    case 5: //y to the power of x
+                        numOperands = 2;
                         if (stackIndex >= numOperands) {
+                            opY = stackNums[stackIndex - 2];
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
-                        stackNums[stackIndex - numOperands] = Math.pow(opX, 2);
+                        stackNums[stackIndex - numOperands] = Math.pow(opY, opX);
                         break;
                     case 11: //asin
                         if (stackIndex >= numOperands) {
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
                         stackNums[stackIndex - numOperands] = Math.asin(opX);
@@ -354,7 +369,8 @@ public class MainActivity extends AppCompatActivity {
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
                         stackNums[stackIndex - numOperands] = Math.acos(opX);
@@ -366,40 +382,43 @@ public class MainActivity extends AppCompatActivity {
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
                         //Degree option
                         stackNums[stackIndex - numOperands] = Math.cos(opX);
                         break;
-                    case 14: //xth root of y
-                        numOperands = 2;
+                    case 14: //Square root
+                        numOperands = 1;
                         if (stackIndex >= numOperands) {
-                            opY = stackNums[stackIndex - 2];
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
-                        if (opY < 0) {
+                        if (opX < 0) {
                             errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
+                            return;
                         } else {
-                            stackNums[stackIndex - numOperands] = Math.pow(opY, 1 / opX);
+                            stackNums[stackIndex - numOperands] = Math.sqrt(opX);
                         }
                         break;
-                    case 15: //y to the power of x
-                        numOperands = 2;
+                    case 15: //Squared
+                        numOperands = 1;
                         if (stackIndex >= numOperands) {
-                            opY = stackNums[stackIndex - 2];
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            failure = true;
+                            if (wasNumEntry)
+                                updateStackBox(true, false);
                             return;
                         }
-                        stackNums[stackIndex - numOperands] = Math.pow(opY, opX);
+                        stackNums[stackIndex - numOperands] = Math.pow(opX, 2);
 
                 }
             } catch (Exception e) {
@@ -472,47 +491,44 @@ public class MainActivity extends AppCompatActivity {
     //  - NOTE: If stackIndex has been changed since last full update, textView will not be synced
     //        with array if onlyLast or delLast is used
     void updateStackBox(boolean onlyLast, boolean delLast) {
-        String fullStackText = "";
-        //set format string based on settings
-        String numForm = "%g";
+        StringBuilder fullStackText = new StringBuilder();
         if (stackIndex > 0) {
             if (delLast || onlyLast) {
-                fullStackText = stackView.getText().toString();
+                fullStackText.append(stackView.getText().toString());
 
                 if (delLast) {
                     int lastNewLine = fullStackText.lastIndexOf("\n");
 
                     if (lastNewLine > 0) {
-                        fullStackText = fullStackText.substring(0, lastNewLine);
+                        fullStackText.append(fullStackText.substring(0, lastNewLine));
                     } else {
-                        fullStackText = "";
+                        fullStackText.setLength(0); //should effectively set it to nothing: AKA ""
                     }
                 }
 
                 if (onlyLast) {
-                    stackStrings[stackIndex - 1] = String.format(numForm, stackNums[stackIndex - 1]);
-                    fullStackText = fullStackText + "\n" + stackStrings[stackIndex - 1];
+                    fullStackText.append(fullStackText).append("\n").append(
+                            formatDouble(stackNums[stackIndex - 1]));
                 }
             } else {
-                //redo whole stack, draw cursor at appropriate pos
+                //redo whole stack
+                String numStr = "";
                 for (int i = 0; i < stackIndex; i++) {
-                    stackStrings[i] = String.format(numForm, stackNums[i]);
-
+                    numStr = formatDouble(stackNums[i]);
                     if (i == cursorPos - 1 && cursorPos == markPos) {
-                        fullStackText = fullStackText + "\n" + "►■  " + stackStrings[i];
+                        fullStackText.append("\n").append("►■  ").append(numStr);
                     } else if (i == cursorPos - 1) {
-                        fullStackText = fullStackText + "\n" + "►   " + stackStrings[i];
+                        fullStackText.append("\n").append("►   ").append(numStr);
                     } else  if(i == markPos - 1) {
-                        fullStackText = fullStackText + "\n" + "■  " + stackStrings[i];
+                        fullStackText.append("\n").append("■  ").append(numStr);
                     } else {
-                        fullStackText = fullStackText + "\n" + stackStrings[i];
+                        fullStackText.append("\n").append(numStr);
                     }
                 }
             }
         }
         stackView.setMaxLines(stackIndex);
-        stackView.getScrollY();
-        stackView.setText(fullStackText);
+        stackView.setText(fullStackText.toString());
         stackView.scrollTo(0, 200);
         /*int cursorDelta = (cursorPos == 0) ? 0 : stackIndex - cursorPos;
         if (cursorDelta > 2) {
@@ -521,6 +537,23 @@ public class MainActivity extends AppCompatActivity {
         } else {
             stackView.scrollTo(0, stackView.getBottom());
         }*/
+    }
+
+    String formatDouble(double number) {
+        String formattedNumber = "";
+        //set format string based on settings; placeholders for now
+        String formatMode = "standard";
+        String numForm = "%1.4g";
+
+        if (formatMode.equals("standard") && Math.abs(number) < 1e6) {
+            if (number == (long) number)
+                formattedNumber = String.format(Locale.getDefault(), "%d", (long) number);
+            else
+                formattedNumber = String.format(Locale.getDefault(),"%s", number);
+        } else {
+            formattedNumber = String.format(Locale.getDefault(), numForm, number);
+        }
+        return formattedNumber;
     }
 
     int numDigits(String number) {
@@ -601,6 +634,8 @@ public class MainActivity extends AppCompatActivity {
                         point2 = stackIndex - 1;
                     if (point1 == point2)
                         break;
+                    if (point1 < 0)
+                        point1 = 0;
                     if (point2 < point1) {
                         int hodl = point2;
                         point2 = point1;
@@ -612,6 +647,7 @@ public class MainActivity extends AppCompatActivity {
                         stackNums[i] = stackNums[i + 1];
                     }
                     stackNums[point2] = stackNums[maxStack];
+
                 } else {
                     errorToast("too few arguments", Toast.LENGTH_SHORT);
                 }
@@ -622,6 +658,8 @@ public class MainActivity extends AppCompatActivity {
                         point2 = stackIndex - 1;
                     if (point1 == point2)
                         break;
+                    if (point1 < 0)
+                        point1 = 0;
                     if (point2 < point1) {
                         int hodl = point2;
                         point2 = point1;
@@ -633,7 +671,6 @@ public class MainActivity extends AppCompatActivity {
                         stackNums[i] = stackNums[i-1];
                     }
                     stackNums[point1] = stackNums[maxStack];
-
                 } else {
                     errorToast("too few arguments", Toast.LENGTH_SHORT);
                 }
