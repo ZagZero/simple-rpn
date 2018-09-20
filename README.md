@@ -23,4 +23,4 @@ ToDo:\
     - Overhaul stack storage and display system to support non-scalar values\
     - Add Vector support/mode\
     - Add Matrix support/mode\
-    - Add value storage support\
+    - Add value storage support
