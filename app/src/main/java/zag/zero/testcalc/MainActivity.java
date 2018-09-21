@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity {
         addBtn = (Button) this.findViewById(R.id.btn_op_add);
         altBtn = (Button) this.findViewById(R.id.btn_misc_shift);
 
+        modeHandle(false, false);
     }
 
     public void numButtonPressed(View v) {
@@ -118,49 +119,60 @@ public class MainActivity extends AppCompatActivity {
                 }
                 break;
             case "2": //Stack Button
-                modeHandle(false, !stackMode);
+                if (altMode) {
+                    modeHandle(false, !stackMode);
+                } else {
+                    stackFnHandler("fn5");
+                }
                 break;
             case "3": //Back Button
-                if (!stackMode) {
-                    if (numEntry) {
-                        if (exponentEntry) {
-                            exponentEntry = exponentNum != 0;
-                            exponentNum /= 10;
-
-                            //} else if (decimalEntry) {
-                        } else {
-                            //enteredNum = (long) enteredNum / 10;
-                            int entryLength = enteredNumPrep.length();
-                            String nextDelChar = "";
-                            if (entryLength > 1) {
-                                nextDelChar = enteredNumPrep.substring(entryLength - 2,
-                                        entryLength - 1);
-                                if (nextDelChar.equals("-"))
-                                    entryClear();
-                                else
-                                    enteredNumPrep = enteredNumPrep.substring(0, entryLength - 1);
-                            } else {
-                                entryClear();
-                            }
-                        }
+                if (numEntry) {
+                    // Remove digit from entry field, from the exponent input active,
+                    //   otherwise from the actual decimal number
+                    if (exponentEntry) {
+                        // Set exponentEntry to false if it = 0
+                        exponentEntry = exponentNum != 0;
+                        // Divide exponent by 10 to truncate last digit, works since exponentNum
+                        //   is an integer - By putting this after the exponentEntry check,
+                        //   reducing exponentNum to zero the first time keeps exponentEntry active,
+                        //   the second time reverts back to decimal entry
+                        exponentNum /= 10;
                     } else {
-                        //drop last stack val
-                        if (stackIndex > 0) {
-                            stackIndex--;
-                            updateStackBox(false, true);
+                        // Get the length of the entered number
+                        int entryLength = enteredNumPrep.length();
+                        String nextDelChar = "";
+
+                        // Backspace if there is more than one character, otherwise just clear the
+                        //   entry field
+                        if (entryLength > 1) {
+                            // Set nextDelChar to the character before the one about to be deleted
+                            nextDelChar = enteredNumPrep.substring(entryLength - 2,
+                                    entryLength - 1);
+
+                            // Clear the entry if there is only the negative sign and one digit,
+                            //   otherwise remove the last character
+                            if (nextDelChar.equals("-"))
+                                entryClear();
+                            else
+                                enteredNumPrep = enteredNumPrep.substring(0, entryLength - 1);
+                        } else {
+                            entryClear();
                         }
                     }
                 } else {
+                    // Drop from stack
                     stackFnHandler("drop");
                 }
                 break;
             case "4": //Decimal Button
+                // Check if there is any existing number entry
                 if (numEntry) {
                     if (!exponentEntry) {
                         if (!enteredNumPrep.contains(".") && numDigits(enteredNumPrep) < 16)
                             enteredNumPrep = enteredNumPrep + ".";
                     }
                 } else {
+                    // Start with 0. if there
                     enteredNumPrep = "0.";
                     numEntry = true;
                 }
@@ -287,6 +299,7 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         //Degree option
@@ -300,6 +313,7 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         //Degree option
@@ -313,29 +327,29 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         //Degree option
-                        stackNums[stackIndex - numOperands] = Math.cos(opX);
+                        stackNums[stackIndex - numOperands] = Math.tan(opX);
                         break;
-                    case 4: //xth root of y
-                        numOperands = 2;
+                    case 4: //square root                        numOperands = 1;
                         if (stackIndex >= numOperands) {
-                            opY = stackNums[stackIndex - 2];
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
-                        if (opY < 0) {
+                        if (opX < 0) {
                             errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
                             return;
                         } else {
-                            stackNums[stackIndex - numOperands] = Math.pow(opY, 1 / opX);
+                            stackNums[stackIndex - numOperands] = Math.sqrt(opX);
                         }
                         break;
                     case 5: //y to the power of x
@@ -347,6 +361,7 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         stackNums[stackIndex - numOperands] = Math.pow(opY, opX);
@@ -358,6 +373,7 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         stackNums[stackIndex - numOperands] = Math.asin(opX);
@@ -371,6 +387,7 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         stackNums[stackIndex - numOperands] = Math.acos(opX);
@@ -384,31 +401,34 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
                         //Degree option
-                        stackNums[stackIndex - numOperands] = Math.cos(opX);
+                        stackNums[stackIndex - numOperands] = Math.atan(opX);
                         break;
-                    case 14: //Square root
-                        numOperands = 1;
+                    case 14: //xth root of y
+                        numOperands = 2;
                         if (stackIndex >= numOperands) {
+                            opY = stackNums[stackIndex - 2];
                             opX = stackNums[stackIndex - 1];
                         } else {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
-                        if (opX < 0) {
+                        if (opY < 0) {
                             errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
                             return;
                         } else {
-                            stackNums[stackIndex - numOperands] = Math.sqrt(opX);
+                            stackNums[stackIndex - numOperands] = Math.pow(opY, 1 / opX);
                         }
                         break;
-                    case 15: //Squared
+                    case 15: // 1/x
                         numOperands = 1;
                         if (stackIndex >= numOperands) {
                             opX = stackNums[stackIndex - 1];
@@ -416,9 +436,10 @@ public class MainActivity extends AppCompatActivity {
                             errorToast("too few arguments", Toast.LENGTH_SHORT);
                             if (wasNumEntry)
                                 updateStackBox(true, false);
+                            failure = true;
                             return;
                         }
-                        stackNums[stackIndex - numOperands] = Math.pow(opX, 2);
+                        stackNums[stackIndex - numOperands] = 1 / opX;
 
                 }
             } catch (Exception e) {
@@ -492,14 +513,20 @@ public class MainActivity extends AppCompatActivity {
     //        with array if onlyLast or delLast is used
     void updateStackBox(boolean onlyLast, boolean delLast) {
         StringBuilder fullStackText = new StringBuilder();
+        // Only do anything if there is an item to display
         if (stackIndex > 0) {
             if (delLast || onlyLast) {
+                // Both deleting last item and only appending last item need the current stack
+                //   text to work with
                 fullStackText.append(stackView.getText().toString());
 
                 if (delLast) {
+                    // Get the last newline index of the stack
                     int lastNewLine = fullStackText.lastIndexOf("\n");
 
                     if (lastNewLine > 0) {
+                        // Not sure why I append... Works somehow, but I think I should just
+                        //   set it to the substring #FIXME ?
                         fullStackText.append(fullStackText.substring(0, lastNewLine));
                     } else {
                         fullStackText.setLength(0); //should effectively set it to nothing: AKA ""
@@ -515,6 +542,8 @@ public class MainActivity extends AppCompatActivity {
                 String numStr = "";
                 for (int i = 0; i < stackIndex; i++) {
                     numStr = formatDouble(stackNums[i]);
+
+                    // Add the stack cursor and marker if needed
                     if (i == cursorPos - 1 && cursorPos == markPos) {
                         fullStackText.append("\n").append("►■  ").append(numStr);
                     } else if (i == cursorPos - 1) {
@@ -527,9 +556,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         }
+
+        // Set the stack textbox to have a number of lines equal to the number of stack items
+        //   (to ensure scrolling is sized correctly)
         stackView.setMaxLines(stackIndex);
         stackView.setText(fullStackText.toString());
-        stackView.scrollTo(0, 200);
+
+        //stackView.scrollTo(0, 200);
         /*int cursorDelta = (cursorPos == 0) ? 0 : stackIndex - cursorPos;
         if (cursorDelta > 2) {
             //stackView.scrollTo(0, (cursorDelta-2)*stackView.getLineHeight());
@@ -542,15 +575,22 @@ public class MainActivity extends AppCompatActivity {
     String formatDouble(double number) {
         String formattedNumber = "";
         //set format string based on settings; placeholders for now
-        String formatMode = "standard";
-        String numForm = "%1.4g";
+        String formatMode = "standard";  // #FIXME - USE ENUM!
+        String numForm = "%1.4g"; // Scientific format, will need to better handle this
+                                  //   in the future
 
-        if (formatMode.equals("standard") && Math.abs(number) < 1e6) {
+        // Temporary until proper format options are implemented
+        //   Utilizes standard float/integer formatting if the number isn't too large (> 1e6)
+        //   or too small
+        if (formatMode.equals("standard") && (Math.abs(number) < 1e6 && Math.abs(number) > 1e-6)) {
+            // If the number is the same as itself converted to integer (long) form,
+            //   just format as integer
             if (number == (long) number)
                 formattedNumber = String.format(Locale.getDefault(), "%d", (long) number);
             else
                 formattedNumber = String.format(Locale.getDefault(),"%s", number);
         } else {
+            // Use the scientific format string
             formattedNumber = String.format(Locale.getDefault(), numForm, number);
         }
         return formattedNumber;
@@ -584,6 +624,7 @@ public class MainActivity extends AppCompatActivity {
                 multBtn.setText(R.string.btn_mult_d);
                 subBtn.setText(R.string.btn_sub_d);
                 addBtn.setText(R.string.btn_add_d);
+                stackBtn.setText(R.string.btn_stack_a);
                 altBtn.setBackgroundResource(R.drawable.key_pressed);
                 stackBtn.setBackgroundResource(R.drawable.main_key);
 
@@ -599,6 +640,7 @@ public class MainActivity extends AppCompatActivity {
                 multBtn.setText(R.string.btn_mult_s);
                 subBtn.setText(R.string.btn_sub_s);
                 addBtn.setText(R.string.btn_add_s);
+                stackBtn.setText(R.string.btn_stack_a);
                 altBtn.setBackgroundResource(R.drawable.main_key);
                 stackBtn.setBackgroundResource(R.drawable.key_pressed);
 
@@ -614,6 +656,7 @@ public class MainActivity extends AppCompatActivity {
                 multBtn.setText(R.string.btn_mult_d);
                 subBtn.setText(R.string.btn_sub_d);
                 addBtn.setText(R.string.btn_add_d);
+                stackBtn.setText(R.string.btn_stack_d);
                 altBtn.setBackgroundResource(R.drawable.main_key);
                 stackBtn.setBackgroundResource(R.drawable.main_key);
 
@@ -623,11 +666,12 @@ public class MainActivity extends AppCompatActivity {
         stackMode = enableStack;
     }
 
+
     void stackFnHandler(String stackComm) {
 
         int point1 = cursorPos - 1;
         int point2 = markPos - 1;
-        switch (stackComm) {
+        switch (stackComm) {  // #FIXME - USE ENUM!
             case "fn1": //Roll Up
                 if (stackIndex >= 2) {
                     if (point2 < 0)
@@ -715,19 +759,30 @@ public class MainActivity extends AppCompatActivity {
                     stackNums[maxStack] = stackNums[point1];
                     stackNums[point1] = stackNums[point2];
                     stackNums[point2] = stackNums[maxStack];
+                    if (point1 == (stackIndex - 2) && point2 == (stackIndex - 1)) {
+                        modeHandle(false, false);
+                    }
                 } else {
                     errorToast("too few arguments", Toast.LENGTH_SHORT);
                 }
                 break;
             case "op1": //Cursor up (actually cursorPos-=1 since top is 0)
-                if (cursorPos != 1)
-                    cursorPos--;
-                if (cursorPos < 0)
+                // Set cursor to the bottom of the stack (the highest stack index) if it isn't
+                //   currently active (indicated by being 0)
+                if (cursorPos <= 0)
                     cursorPos = stackIndex;
+
+                // Only move cursor up (decrement) if it isn't at the top (= 1) and wasn't just
+                //   activated - Prevents advancing up past the top entry
+                else if (cursorPos != 1)
+                    cursorPos--;
                 break;
             case "op2": //Cursor down (actually cursorPos+=1 since top is 0)
-                if (cursorPos != 0) {
+                // Only move down (increment) if the cursor is active (> 0)
+                if (cursorPos > 0) {
                     cursorPos++;
+                    // Deactivate the cursor if it was moved past the bottom of the stack
+                    //   (> stackIndex) by setting it to 0
                     if (cursorPos > stackIndex)
                         cursorPos = 0;
                 }
@@ -754,6 +809,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
         }
+
         if (cursorPos > stackIndex)
             cursorPos = 0;
         if (markPos > stackIndex)

@@ -12,11 +12,11 @@
     <string name="fn3_d">tan</string>
     <string name="fn3_a">atan</string>
     <string name="fn3_s">Mark</string>
-    <string name="fn4_d">ˣ√y</string>
-    <string name="fn4_a">√x</string>
+    <string name="fn4_d">√x</string>
+    <string name="fn4_a">ˣ√y</string>
     <string name="fn4_s">Copy</string>
     <string name="fn5_d">yˣ</string>
-    <string name="fn5_a">x²</string>
+    <string name="fn5_a">1/x</string>
     <string name="fn5_s">Swap</string>
     <string name="btn_enter_d">Enter</string>
     <string name="btn_sign_d">+/-</string>
@@ -29,5 +29,7 @@
     <string name="btn_sub_s"> </string>
     <string name="btn_add_d">+</string>
     <string name="btn_add_s">"Clear"</string>
+    <string name="btn_stack_d">"Swap"</string>
+    <string name="btn_stack_a">"Stack"</string>
 
 </resources>
