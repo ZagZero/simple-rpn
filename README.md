@@ -9,7 +9,7 @@ ToDo:
 - Add options menu
 - Add new formatting options
 - Add degrees/radians option
-- Add alternative mode options for the F-keys (or at least system that allows for expansion)<br/><br/>  
+- Add alternative mode options for the F-keys (or at least system that allows for expansion)<br/><br/>
 Maybe Someday:
 - Overhaul stack storage and display system to support non-scalar values
 - Add Vector support/mode
