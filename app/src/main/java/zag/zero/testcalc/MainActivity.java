@@ -3,6 +3,8 @@ package zag.zero.testcalc;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.view.HapticFeedbackConstants;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Button;
@@ -43,7 +45,9 @@ public class MainActivity extends AppCompatActivity {
     Button addBtn;
     Button altBtn;
 
-
+    interface iBtnAction {
+        void action(View v);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,408 +59,482 @@ public class MainActivity extends AppCompatActivity {
         stackView = (TextView) this.findViewById(R.id.stackView);
         stackView.setMovementMethod(new ScrollingMovementMethod());
 
-        fn1 = (Button) this.findViewById(R.id.btn_fn_1);
-        fn2 = (Button) this.findViewById(R.id.btn_fn_2);
-        fn3 = (Button) this.findViewById(R.id.btn_fn_3);
-        fn4 = (Button) this.findViewById(R.id.btn_fn_4);
-        fn5 = (Button) this.findViewById(R.id.btn_fn_5);
-        signBtn = (Button) this.findViewById(R.id.btn_misc_sign);
-        stackBtn = (Button) this.findViewById(R.id.btn_misc_stack);
-        divBtn = (Button) this.findViewById(R.id.btn_op_div);
-        multBtn = (Button) this.findViewById(R.id.btn_op_mult);
-        subBtn = (Button) this.findViewById(R.id.btn_op_sub);
-        addBtn = (Button) this.findViewById(R.id.btn_op_add);
-        altBtn = (Button) this.findViewById(R.id.btn_misc_shift);
+        functionPressed fnAction = new functionPressed();
+        miscButtonPressed miscAction = new miscButtonPressed();
+        operatorPressed operatorAction = new operatorPressed();
+        enterPressed enterAction = new enterPressed();
+        numButtonPressed numAction = new numButtonPressed();
+
+
+        fn1 = initButton(R.id.btn_fn_1, HapticFeedbackConstants.KEYBOARD_TAP, fnAction);
+        fn2 = initButton(R.id.btn_fn_2, HapticFeedbackConstants.KEYBOARD_TAP, fnAction);
+        fn3 = initButton(R.id.btn_fn_3, HapticFeedbackConstants.KEYBOARD_TAP, fnAction);
+        fn4 = initButton(R.id.btn_fn_4, HapticFeedbackConstants.KEYBOARD_TAP, fnAction);
+        fn5 = initButton(R.id.btn_fn_5, HapticFeedbackConstants.KEYBOARD_TAP, fnAction);
+        signBtn  = initButton(R.id.btn_misc_sign, HapticFeedbackConstants.KEYBOARD_TAP, miscAction);
+        stackBtn = initButton(R.id.btn_misc_stack, HapticFeedbackConstants.KEYBOARD_TAP, miscAction);
+        divBtn   = initButton(R.id.btn_op_div, HapticFeedbackConstants.KEYBOARD_TAP, operatorAction);
+        multBtn  = initButton(R.id.btn_op_mult, HapticFeedbackConstants.KEYBOARD_TAP, operatorAction);
+        subBtn   = initButton(R.id.btn_op_sub, HapticFeedbackConstants.KEYBOARD_TAP, operatorAction);
+        addBtn   = initButton(R.id.btn_op_add, HapticFeedbackConstants.KEYBOARD_TAP, operatorAction);
+        altBtn   = initButton(R.id.btn_misc_shift, HapticFeedbackConstants.KEYBOARD_TAP, miscAction);
+
+        initButton(R.id.btn_enter, HapticFeedbackConstants.LONG_PRESS, enterAction);
+        initButton(R.id.btn_misc_back, HapticFeedbackConstants.KEYBOARD_TAP, miscAction);
+        initButton(R.id.btn_misc_dec, HapticFeedbackConstants.KEYBOARD_TAP, miscAction);
+        initButton(R.id.btn_num_0, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_1, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_2, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_3, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_4, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_5, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_6, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_7, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_8, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
+        initButton(R.id.btn_num_9, HapticFeedbackConstants.KEYBOARD_TAP, numAction);
 
         modeHandle(false, false);
+
+
     }
 
-    public void numButtonPressed(View v) {
-        String numStr = v.getTag().toString();
-        numStr = numStr.substring(0, 1);
-        int numPressed = Integer.parseInt(numStr);
-        if (exponentEntry) {
-            if (Math.abs(exponentNum) * 10 < 100)
-                exponentNum = exponentNum * 10 + (numPressed * ((exponentNum >= 0)?1:-1));
+    private Button initButton(int buttonID, int hapticTypeID, iBtnAction action) {
+        Button newButton = this.findViewById(buttonID);
+        newButton.setOnTouchListener(new HapticTouchListener(hapticTypeID, action));
+        return newButton;
+    }
+
+    // Class to handle touch events and respond with haptic feedback
+    private class HapticTouchListener implements View.OnTouchListener {
+
+        private final int feedbackType;
+        private final iBtnAction btnAction;
+
+        public HapticTouchListener(int type, iBtnAction action) {
+            feedbackType = type;
+            btnAction = action;
         }
-        else
+        public int feedbackType() { return feedbackType; }
+
+        @Override
+        public boolean onTouch(View v, MotionEvent event) {
+            // only perform feedback when the user touches the view, as opposed
+            // to lifting a finger off the view
+            if( event.getAction() == MotionEvent.ACTION_DOWN ){
+                // perform the feedback
+                v.performHapticFeedback( feedbackType() );
+                // do what it was supposed to do
+                btnAction.action(v);
+                // allow it to change to the pressed icon (false)
+                return false;
+            }
+
+            return false;
+        }
+    }
+
+    private class numButtonPressed implements iBtnAction {
+        @Override
+        public void action(View v) {
+            String numStr = v.getTag().toString();
+            numStr = numStr.substring(0, 1);
+            int numPressed = Integer.parseInt(numStr);
+            if (exponentEntry) {
+                if (Math.abs(exponentNum) * 10 < 100)
+                    exponentNum = exponentNum * 10 + (numPressed * ((exponentNum >= 0)?1:-1));
+            }
+            else
             if (numDigits(enteredNumPrep) < 16)
                 enteredNumPrep = enteredNumPrep + numStr;
-        numEntry = true;
-        formatEntry();
+            numEntry = true;
+            formatEntry();
+        }
     }
 
-    public void miscButtonPressed(View v) {
-        String indexStr = v.getTag().toString();
-        indexStr = indexStr.substring(0, 1);
-        switch (indexStr){
-            case "1": //Sign Button - EEX in alt
-                if (altMode) {
-                    if (!numEntry) {
-                        numEntry = true;
-                        enteredNumPrep = "1";
+    private class miscButtonPressed implements iBtnAction {
+        @Override
+        public void action(View v) {
+            String indexStr = v.getTag().toString();
+            indexStr = indexStr.substring(0, 1);
+            switch (indexStr){
+                case "1": //Sign Button - EEX in alt
+                    if (altMode) {
+                        if (!numEntry) {
+                            numEntry = true;
+                            enteredNumPrep = "1";
+                        }
+                        exponentEntry = true;
+                        modeHandle(false, false);
+                    } else {
+                        if (numEntry) {
+                            if (exponentEntry) {
+                                exponentNum *= -1;
+                            } else {
+                                //enteredNum *= -1;
+                                if (enteredNumPrep.contains("-"))
+                                    enteredNumPrep = enteredNumPrep.replace("-", "");
+                                else
+                                    enteredNumPrep = "-" + enteredNumPrep;
+                            }
+                        } else {
+                            if (stackIndex > 0) {
+                                stackNums[stackIndex - 1] *= -1;
+                                //Redraw last in stack
+                                updateStackBox(true, true);
+                            }
+                        }
                     }
-                    exponentEntry = true;
-                    modeHandle(false, false);
-                } else {
+                    break;
+                case "2": //Stack Button
+                    if (!altMode && !stackMode) {
+                        stackFnHandler("fn5");
+                    } else {
+                        modeHandle(false, !stackMode);
+                    }
+                    break;
+                case "3": //Back Button
                     if (numEntry) {
+                        // Remove digit from entry field, from the exponent input active,
+                        //   otherwise from the actual decimal number
                         if (exponentEntry) {
-                            exponentNum *= -1;
+                            // Set exponentEntry to false if it = 0
+                            exponentEntry = exponentNum != 0;
+                            // Divide exponent by 10 to truncate last digit, works since exponentNum
+                            //   is an integer - By putting this after the exponentEntry check,
+                            //   reducing exponentNum to zero the first time keeps exponentEntry active,
+                            //   the second time reverts back to decimal entry
+                            exponentNum /= 10;
                         } else {
-                            //enteredNum *= -1;
-                            if (enteredNumPrep.contains("-"))
-                                enteredNumPrep = enteredNumPrep.replace("-", "");
-                            else
-                                enteredNumPrep = "-" + enteredNumPrep;
-                        }
-                    } else {
-                        if (stackIndex > 0) {
-                            stackNums[stackIndex - 1] *= -1;
-                            //Redraw last in stack
-                            updateStackBox(true, true);
-                        }
-                    }
-                }
-                break;
-            case "2": //Stack Button
-                if (altMode) {
-                    modeHandle(false, !stackMode);
-                } else {
-                    stackFnHandler("fn5");
-                }
-                break;
-            case "3": //Back Button
-                if (numEntry) {
-                    // Remove digit from entry field, from the exponent input active,
-                    //   otherwise from the actual decimal number
-                    if (exponentEntry) {
-                        // Set exponentEntry to false if it = 0
-                        exponentEntry = exponentNum != 0;
-                        // Divide exponent by 10 to truncate last digit, works since exponentNum
-                        //   is an integer - By putting this after the exponentEntry check,
-                        //   reducing exponentNum to zero the first time keeps exponentEntry active,
-                        //   the second time reverts back to decimal entry
-                        exponentNum /= 10;
-                    } else {
-                        // Get the length of the entered number
-                        int entryLength = enteredNumPrep.length();
-                        String nextDelChar = "";
+                            // Get the length of the entered number
+                            int entryLength = enteredNumPrep.length();
+                            String nextDelChar = "";
 
-                        // Backspace if there is more than one character, otherwise just clear the
-                        //   entry field
-                        if (entryLength > 1) {
-                            // Set nextDelChar to the character before the one about to be deleted
-                            nextDelChar = enteredNumPrep.substring(entryLength - 2,
-                                    entryLength - 1);
+                            // Backspace if there is more than one character, otherwise just clear the
+                            //   entry field
+                            if (entryLength > 1) {
+                                // Set nextDelChar to the character before the one about to be deleted
+                                nextDelChar = enteredNumPrep.substring(entryLength - 2,
+                                        entryLength - 1);
 
-                            // Clear the entry if there is only the negative sign and one digit,
-                            //   otherwise remove the last character
-                            if (nextDelChar.equals("-"))
+                                // Clear the entry if there is only the negative sign and one digit,
+                                //   otherwise remove the last character
+                                if (nextDelChar.equals("-"))
+                                    entryClear();
+                                else
+                                    enteredNumPrep = enteredNumPrep.substring(0, entryLength - 1);
+                            } else {
                                 entryClear();
-                            else
-                                enteredNumPrep = enteredNumPrep.substring(0, entryLength - 1);
-                        } else {
-                            entryClear();
+                            }
                         }
+                    } else {
+                        // Drop from stack
+                        stackFnHandler("drop");
                     }
-                } else {
-                    // Drop from stack
-                    stackFnHandler("drop");
-                }
-                break;
-            case "4": //Decimal Button
-                // Check if there is any existing number entry
-                if (numEntry) {
-                    if (!exponentEntry) {
-                        if (!enteredNumPrep.contains(".") && numDigits(enteredNumPrep) < 16)
-                            enteredNumPrep = enteredNumPrep + ".";
+                    break;
+                case "4": //Decimal Button
+                    // Check if there is any existing number entry
+                    if (numEntry) {
+                        if (!exponentEntry) {
+                            if (!enteredNumPrep.contains(".") && numDigits(enteredNumPrep) < 16)
+                                enteredNumPrep = enteredNumPrep + ".";
+                        }
+                    } else {
+                        // Start with 0. if there
+                        enteredNumPrep = "0.";
+                        numEntry = true;
                     }
-                } else {
-                    // Start with 0. if there
-                    enteredNumPrep = "0.";
-                    numEntry = true;
-                }
 
                 /*
                 if (!decimalEntry) {
                     decimalEntry = true;
 
                 }*/
-                break;
-            case "5": //Shift Button
-                modeHandle(!altMode, false);
-        }
-
-        formatEntry();
-    }
-
-    public void enterPressed(View v){
-        if (stackMode)
-            modeHandle(false, false);
-        if (numEntry) {
-            stackEntry(true);
-        } else {
-            if (stackIndex < maxStack) {
-                if (stackIndex > 0) {
-                    stackNums[stackIndex] = stackNums[stackIndex - 1];
-                    stackIndex++;
-                    updateStackBox(false, false);
-                }
-            } else {
-                errorToast("stack full", Toast.LENGTH_SHORT);
+                    break;
+                case "5": //Shift Button
+                    modeHandle(!altMode, false);
             }
+
+            formatEntry();
         }
     }
 
-    public void operatorPressed(View v){
-        String indexStr = v.getTag().toString();
-        indexStr = indexStr.substring(0, 1);
+    private class enterPressed implements iBtnAction {
+        @Override
+        public void action(View v) {
+            v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
 
-        if (!stackMode) {
-            double opX;
-            double opY;
-            boolean failure = false;
-            boolean wasNumEntry = false;
-
-            if (numEntry) {
-                stackEntry(false);
-                wasNumEntry = true;
-            }
-
-            if (stackIndex >= 2) {
-                opY = stackNums[stackIndex - 2];
-                opX = stackNums[stackIndex - 1];
-            } else {
-                errorToast("too few arguments", Toast.LENGTH_SHORT);
-                if (wasNumEntry)
-                    updateStackBox(true, false);
-                return;
-            }
-            try {
-                switch (indexStr) {
-                    case "4": //Plus
-                        stackNums[stackIndex - 2] = opY + opX;
-                        break;
-                    case "3": //Minus
-                        stackNums[stackIndex - 2] = opY - opX;
-                        break;
-                    case "2": //Multiply
-                        stackNums[stackIndex - 2] = opY * opX;
-                        break;
-                    case "1": //Divide
-                        if (opX != 0) {
-                            stackNums[stackIndex - 2] = opY / opX;
-                        } else {
-                            errorToast("divide by zero", Toast.LENGTH_SHORT);
-                        }
-                }
-            } catch (Exception e) {
-                errorToast(e.getMessage(), Toast.LENGTH_LONG);
-                failure = true;
-            } finally {
-                if (!failure) {
-                    stackIndex--;
-                    updateStackBox(false, false);
-                }
-            }
-        } else {
-            stackFnHandler("op"+indexStr);
-        }
-
-    }
-
-    public void functionPressed(View v) {
-        String numStr = v.getTag().toString();
-        numStr = numStr.substring(0, 1);
-        int fnNum = Integer.parseInt(numStr);
-
-        if (!stackMode) {
-
-            if (altMode) {
-                fnNum += 10;
+            if (stackMode)
                 modeHandle(false, false);
-            }
-
-            double opX;
-            double opY;
-            int numOperands = 1;
-            boolean failure = false;
-            boolean wasNumEntry = false;
-
             if (numEntry) {
-                stackEntry(false);
-                wasNumEntry = true;
-            }
-
-
-            try {
-                switch (fnNum) {
-                    case 1: //sin
-                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        //Degree option
-                        stackNums[stackIndex - numOperands] = Math.sin(opX);
-                        break;
-                    case 2: //cos
-                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        //Degree option
-                        stackNums[stackIndex - numOperands] = Math.cos(opX);
-                        break;
-                    case 3: //tan
-                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        //Degree option
-                        stackNums[stackIndex - numOperands] = Math.tan(opX);
-                        break;
-                    case 4: //square root                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        if (opX < 0) {
-                            errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            return;
-                        } else {
-                            stackNums[stackIndex - numOperands] = Math.sqrt(opX);
-                        }
-                        break;
-                    case 5: //y to the power of x
-                        numOperands = 2;
-                        if (stackIndex >= numOperands) {
-                            opY = stackNums[stackIndex - 2];
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        stackNums[stackIndex - numOperands] = Math.pow(opY, opX);
-                        break;
-                    case 11: //asin
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        stackNums[stackIndex - numOperands] = Math.asin(opX);
-                        //Degree option
-                        break;
-                    case 12: //acos
-                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        stackNums[stackIndex - numOperands] = Math.acos(opX);
-                        //Degree option
-                        break;
-                    case 13: //atan
-                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        //Degree option
-                        stackNums[stackIndex - numOperands] = Math.atan(opX);
-                        break;
-                    case 14: //xth root of y
-                        numOperands = 2;
-                        if (stackIndex >= numOperands) {
-                            opY = stackNums[stackIndex - 2];
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        if (opY < 0) {
-                            errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            return;
-                        } else {
-                            stackNums[stackIndex - numOperands] = Math.pow(opY, 1 / opX);
-                        }
-                        break;
-                    case 15: // 1/x
-                        numOperands = 1;
-                        if (stackIndex >= numOperands) {
-                            opX = stackNums[stackIndex - 1];
-                        } else {
-                            errorToast("too few arguments", Toast.LENGTH_SHORT);
-                            if (wasNumEntry)
-                                updateStackBox(true, false);
-                            failure = true;
-                            return;
-                        }
-                        stackNums[stackIndex - numOperands] = 1 / opX;
-
-                }
-            } catch (Exception e) {
-                errorToast(e.getMessage(), Toast.LENGTH_LONG);
-                failure = true;
-            } finally {
-                //Seems like a pretty strange use of finally... I have no idea what I am doing
-                if (!failure) {
-                    stackIndex -= numOperands - 1;
-                    updateStackBox(false, false);
+                stackEntry(true);
+            } else {
+                if (stackIndex < maxStack) {
+                    if (stackIndex > 0) {
+                        stackNums[stackIndex] = stackNums[stackIndex - 1];
+                        stackIndex++;
+                        updateStackBox(false, false);
+                    }
+                } else {
+                    errorToast("stack full", Toast.LENGTH_SHORT);
                 }
             }
-        } else {
-            stackFnHandler("fn"+numStr);
         }
     }
 
+
+    private class operatorPressed implements iBtnAction{
+        @Override
+        public void action(View v) {
+            String indexStr = v.getTag().toString();
+            indexStr = indexStr.substring(0, 1);
+
+            if (!stackMode) {
+                double opX;
+                double opY;
+                boolean failure = false;
+                boolean wasNumEntry = false;
+
+                if (numEntry) {
+                    stackEntry(false);
+                    wasNumEntry = true;
+                }
+
+                if (stackIndex >= 2) {
+                    opY = stackNums[stackIndex - 2];
+                    opX = stackNums[stackIndex - 1];
+                } else {
+                    errorToast("too few arguments", Toast.LENGTH_SHORT);
+                    if (wasNumEntry)
+                        updateStackBox(true, false);
+                    return;
+                }
+                try {
+                    switch (indexStr) {
+                        case "4": //Plus
+                            stackNums[stackIndex - 2] = opY + opX;
+                            break;
+                        case "3": //Minus
+                            stackNums[stackIndex - 2] = opY - opX;
+                            break;
+                        case "2": //Multiply
+                            stackNums[stackIndex - 2] = opY * opX;
+                            break;
+                        case "1": //Divide
+                            if (opX != 0) {
+                                stackNums[stackIndex - 2] = opY / opX;
+                            } else {
+                                errorToast("divide by zero", Toast.LENGTH_SHORT);
+                            }
+                    }
+                } catch (Exception e) {
+                    errorToast(e.getMessage(), Toast.LENGTH_LONG);
+                    failure = true;
+                } finally {
+                    if (!failure) {
+                        stackIndex--;
+                        updateStackBox(false, false);
+                    }
+                }
+            } else {
+                stackFnHandler("op"+indexStr);
+            }
+        }
+    }
+
+    private class functionPressed implements iBtnAction {
+        @Override
+        public void action(View v) {
+            String numStr = v.getTag().toString();
+            numStr = numStr.substring(0, 1);
+            int fnNum = Integer.parseInt(numStr);
+
+            if (!stackMode) {
+
+                if (altMode) {
+                    fnNum += 10;
+                    modeHandle(false, false);
+                }
+
+                double opX;
+                double opY;
+                int numOperands = 1;
+                boolean failure = false;
+                boolean wasNumEntry = false;
+
+                if (numEntry) {
+                    stackEntry(false);
+                    wasNumEntry = true;
+                }
+
+
+                try {
+                    switch (fnNum) {
+                        case 1: //sin
+                            numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            //Degree option
+                            stackNums[stackIndex - numOperands] = Math.sin(opX);
+                            break;
+                        case 2: //cos
+                            numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            //Degree option
+                            stackNums[stackIndex - numOperands] = Math.cos(opX);
+                            break;
+                        case 3: //tan
+                            numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            //Degree option
+                            stackNums[stackIndex - numOperands] = Math.tan(opX);
+                            break;
+                        case 4: //square root                        numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            if (opX < 0) {
+                                errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                return;
+                            } else {
+                                stackNums[stackIndex - numOperands] = Math.sqrt(opX);
+                            }
+                            break;
+                        case 5: //y to the power of x
+                            numOperands = 2;
+                            if (stackIndex >= numOperands) {
+                                opY = stackNums[stackIndex - 2];
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            stackNums[stackIndex - numOperands] = Math.pow(opY, opX);
+                            break;
+                        case 11: //asin
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            stackNums[stackIndex - numOperands] = Math.asin(opX);
+                            //Degree option
+                            break;
+                        case 12: //acos
+                            numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            stackNums[stackIndex - numOperands] = Math.acos(opX);
+                            //Degree option
+                            break;
+                        case 13: //atan
+                            numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            //Degree option
+                            stackNums[stackIndex - numOperands] = Math.atan(opX);
+                            break;
+                        case 14: //xth root of y
+                            numOperands = 2;
+                            if (stackIndex >= numOperands) {
+                                opY = stackNums[stackIndex - 2];
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            if (opY < 0) {
+                                errorToast("complex numbers not supported", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                return;
+                            } else {
+                                stackNums[stackIndex - numOperands] = Math.pow(opY, 1 / opX);
+                            }
+                            break;
+                        case 15: // 1/x
+                            numOperands = 1;
+                            if (stackIndex >= numOperands) {
+                                opX = stackNums[stackIndex - 1];
+                            } else {
+                                errorToast("too few arguments", Toast.LENGTH_SHORT);
+                                if (wasNumEntry)
+                                    updateStackBox(true, false);
+                                failure = true;
+                                return;
+                            }
+                            stackNums[stackIndex - numOperands] = 1 / opX;
+
+                    }
+                } catch (Exception e) {
+                    errorToast(e.getMessage(), Toast.LENGTH_LONG);
+                    failure = true;
+                } finally {
+                    //Seems like a pretty strange use of finally... I have no idea what I am doing
+                    if (!failure) {
+                        stackIndex -= numOperands - 1;
+                        updateStackBox(false, false);
+                    }
+                }
+            } else {
+                stackFnHandler("fn"+numStr);
+            }
+        }
+    }
 
 
     void stackEntry(boolean refreshStack) {
